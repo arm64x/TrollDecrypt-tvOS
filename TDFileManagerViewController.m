@@ -111,11 +111,12 @@ UIAlertController *doneController2 = NULL;
         [sharingUI load];
 
         id sharingView = [[objc_getClass("SFAirDropSharingViewControllerTV") alloc] initWithSharingItems:@[url]];
-        [sharingView setCompletionHandler:^(NSError *error) {
-            [self dismissViewControllerAnimated:true completion:nil];
+        [self dismissViewControllerAnimated:NO completion:^{
+            [self presentViewController:sharingView animated:YES completion:nil];
+            [sharingView setCompletionHandler:^(NSError *error) {
+                [self dismissViewControllerAnimated:YES completion:nil];
+            }];
         }];
-
-        [self presentViewController:sharingView animated:true completion:nil];
     }];
     [doneController2 addAction:openAction];
 
