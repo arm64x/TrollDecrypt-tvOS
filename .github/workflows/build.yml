@@ -1,0 +1,78 @@
+name: Build TrollDecrypt TIPA
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup Theos
+      run: |
+        # Install Theos
+        export THEOS=/opt/theos
+        sudo git clone --recursive https://github.com/theos/theos.git $THEOS
+        
+        # Setup iOS toolchain
+        curl -LO https://github.com/theos/sdks/archive/master.zip
+        unzip master.zip
+        sudo mv sdks-master/*.sdk $THEOS/sdks/
+        
+    - name: Clone SSZipArchive
+      run: |
+        if [ ! -d "SSZipArchive" ]; then
+          git clone https://github.com/ZipArchive/ZipArchive.git SSZipArchive
+        fi
+    
+    - name: Build TIPA
+      run: |
+        export THEOS=/opt/theos
+        export PATH="$THEOS/bin:$PATH"
+        make clean
+        make package
+    
+    - name: Get version
+      id: get_version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          VERSION=$(git rev-parse --short HEAD)
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Building version: $VERSION"
+    
+    - name: Rename TIPA with version
+      run: |
+        if [ -f "TrollDecrypt.tipa" ]; then
+          mv TrollDecrypt.tipa TrollDecrypt_${{ steps.get_version.outputs.version }}.tipa
+        fi
+    
+    - name: Upload TIPA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: TrollDecrypt-${{ steps.get_version.outputs.version }}
+        path: TrollDecrypt_*.tipa
+        retention-days: 30
+    
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: TrollDecrypt_*.tipa
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
