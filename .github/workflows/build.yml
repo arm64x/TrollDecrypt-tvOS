@@ -25,10 +25,9 @@ jobs:
         export THEOS=/opt/theos
         sudo git clone --recursive https://github.com/theos/theos.git $THEOS
         
-        # Download tvOS SDK specifically
-        curl -LO https://github.com/theos/sdks/releases/download/master/AppleTVOS16.4.sdk.tar.xz
-        tar -xf AppleTVOS16.4.sdk.tar.xz
-        sudo mv AppleTVOS16.4.sdk $THEOS/sdks/
+        # Download all SDKs from theos/sdks
+        git clone --depth=1 https://github.com/theos/sdks.git
+        sudo cp -r sdks/*.sdk $THEOS/sdks/
         
     - name: Clone SSZipArchive
       run: |
