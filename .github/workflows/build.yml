@@ -25,10 +25,13 @@ jobs:
         export THEOS=/opt/theos
         sudo git clone --recursive https://github.com/theos/theos.git $THEOS
         
-        # Setup iOS toolchain
+        # Download iOS/tvOS SDKs
         curl -LO https://github.com/theos/sdks/archive/master.zip
         unzip master.zip
-        sudo mv sdks-master/*.sdk $THEOS/sdks/
+        sudo cp -r sdks-master/*.sdk $THEOS/sdks/
+        
+        # Set default SDK to iOS (since tvOS SDK may not be available)
+        echo "export SYSROOT=\$(THEOS)/sdks/iPhoneOS.sdk" | sudo tee -a $THEOS/makefiles/targets/Darwin-arm64/appletv.mk
         
     - name: Clone SSZipArchive
       run: |
