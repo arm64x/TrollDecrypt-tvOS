@@ -111,10 +111,21 @@ UIAlertController *doneController2 = NULL;
         [sharingUI load];
 
         id sharingView = [[objc_getClass("SFAirDropSharingViewControllerTV") alloc] initWithSharingItems:@[url]];
-        [self dismissViewControllerAnimated:NO completion:^{
+        
+        // Dismiss alert first
+        [doneController2 dismissViewControllerAnimated:NO completion:^{
+            // Present AirDrop view
             [self presentViewController:sharingView animated:YES completion:nil];
+            
+            // Set completion handler to dismiss AirDrop view when done
+            __weak typeof(self) weakSelf = self;
             [sharingView setCompletionHandler:^(NSError *error) {
-                [self dismissViewControllerAnimated:YES completion:nil];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [weakSelf dismissViewControllerAnimated:YES completion:^{
+                        // Deselect the row after dismissing
+                        [weakSelf.tableView deselectRowAtIndexPath:indexPath animated:YES];
+                    }];
+                });
             }];
         }];
     }];
